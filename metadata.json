@@ -1,0 +1,6 @@
+{
+  "name": "WAQAR WEBSITE INQUIRY",
+  "description": "Native full stack inquiry management, admission verification, payment receipt generator, order workflow, and WhatsApp integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
