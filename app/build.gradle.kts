@@ -32,11 +32,51 @@ android {
 
   signingConfigs {
     create("release") {
-      storeFile = keystoreProperties.getProperty("storeFile")?.let { rootProject.file(it) }
-      storePassword = keystoreProperties.getProperty("storePassword")
-      keyAlias = keystoreProperties.getProperty("keyAlias")
-      keyPassword = keystoreProperties.getProperty("keyPassword")
+      // Prefer GitHub Actions environment variables.
+      // Fall back to key.properties for local builds.
+      val envKeystorePath = System.getenv("KEYSTORE_PATH")
+      val envKeystorePassword = System.getenv("KEYSTORE_PASSWORD")
+      val envKeyAlias = System.getenv("KEY_ALIAS")
+      val envKeyPassword = System.getenv("KEY_PASSWORD")
+
+      val propertiesStoreFile = keystoreProperties.getProperty("storeFile")
+      val propertiesStorePassword = keystoreProperties.getProperty("storePassword")
+      val propertiesKeyAlias = keystoreProperties.getProperty("keyAlias")
+      val propertiesKeyPassword = keystoreProperties.getProperty("keyPassword")
+
+      storeFile = when {
+        !envKeystorePath.isNullOrBlank() -> file(envKeystorePath)
+        !propertiesStoreFile.isNullOrBlank() -> rootProject.file(propertiesStoreFile)
+        else -> throw GradleException(
+          "Keystore file is not configured. Set KEYSTORE_PATH or storeFile in key.properties."
+        )
+      }
+
+      storePassword = when {
+        !envKeystorePassword.isNullOrBlank() -> envKeystorePassword
+        !propertiesStorePassword.isNullOrBlank() -> propertiesStorePassword
+        else -> throw GradleException(
+          "Keystore password is not configured. Set KEYSTORE_PASSWORD or storePassword in key.properties."
+        )
+      }
+
+      keyAlias = when {
+        !envKeyAlias.isNullOrBlank() -> envKeyAlias
+        !propertiesKeyAlias.isNullOrBlank() -> propertiesKeyAlias
+        else -> throw GradleException(
+          "Key alias is not configured. Set KEY_ALIAS or keyAlias in key.properties."
+        )
+      }
+
+      keyPassword = when {
+        !envKeyPassword.isNullOrBlank() -> envKeyPassword
+        !propertiesKeyPassword.isNullOrBlank() -> propertiesKeyPassword
+        else -> throw GradleException(
+          "Key password is not configured. Set KEY_PASSWORD or keyPassword in key.properties."
+        )
+      }
     }
+
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
       storePassword = "android"
@@ -49,20 +89,34 @@ android {
     release {
       isCrunchPngs = false
       isMinifyEnabled = false
-      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+      proguardFiles(
+        getDefaultProguardFile("proguard-android-optimize.txt"),
+        "proguard-rules.pro"
+      )
       signingConfig = signingConfigs.getByName("release")
     }
-    debug { signingConfig = signingConfigs.getByName("debugConfig") }
+
+    debug {
+      signingConfig = signingConfigs.getByName("debugConfig")
+    }
   }
+
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
+
   buildFeatures {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+    }
+  }
+
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
@@ -77,7 +131,9 @@ secrets {
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
 }
 
-googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
+googleServices {
+  missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN
+}
 
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
