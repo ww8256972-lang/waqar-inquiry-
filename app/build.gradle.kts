@@ -1,4 +1,5 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -6,6 +7,13 @@ plugins {
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
+}
+
+val keystoreProperties = Properties().apply {
+  val keystorePropertiesFile = rootProject.file("key.properties")
+  if (keystorePropertiesFile.isFile) {
+    keystorePropertiesFile.inputStream().use { load(it) }
+  }
 }
 
 android {
@@ -24,11 +32,10 @@ android {
 
   signingConfigs {
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+      storeFile = keystoreProperties.getProperty("storeFile")?.let { rootProject.file(it) }
+      storePassword = keystoreProperties.getProperty("storePassword")
+      keyAlias = keystoreProperties.getProperty("keyAlias")
+      keyPassword = keystoreProperties.getProperty("keyPassword")
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
