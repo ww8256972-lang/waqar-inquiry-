@@ -34,8 +34,19 @@ jobs:
       - name: Decode Android keystore
         shell: bash
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "$KEYSTORE_PATH"
-          test -f "$KEYSTORE_PATH"
+          printf '%s' "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+
+      - name: Verify keystore
+        shell: bash
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          keytool -list \
+            -keystore "$KEYSTORE_PATH" \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "${{ secrets.KEY_ALIAS }}" \
+            >/dev/null
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
@@ -47,11 +58,7 @@ jobs:
           KEY_ALIAS: ${{ env.KEY_ALIAS }}
           KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
         run: |
-          ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
-            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
-            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
-            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+          ./gradlew assembleRelease --stacktrace
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
@@ -62,4 +69,6 @@ jobs:
 
       - name: Clean up keystore
         if: always()
-        run: rm -f "$KEYSTORE_PATH"
+        shell: bash
+        run: |
+          rm -f "$KEYSTORE_PATH"
