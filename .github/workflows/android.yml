@@ -52,6 +52,10 @@ jobs:
           echo "Keystore decoded successfully."
 
       - name: Verify keystore
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_PASSWORD" ]; then
             echo "ERROR: GitHub secret KEYSTORE_PASSWORD is not set."
@@ -96,3 +100,4 @@ jobs:
         with:
           name: signed-release-apk
           path: app/build/outputs/apk/release/*.apk
+          
