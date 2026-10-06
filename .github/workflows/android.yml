@@ -100,4 +100,3 @@ jobs:
         with:
           name: signed-release-apk
           path: app/build/outputs/apk/release/*.apk
-          
