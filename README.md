@@ -110,3 +110,5 @@ A production-grade, genuine Native Android application built with **Kotlin** and
 - `ANDROID_KEYSTORE_PASSWORD`
 - `ANDROID_KEY_ALIAS`
 - `ANDROID_KEY_PASSWORD`
+
+The password and alias secrets may also use the legacy names `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_PASSWORD`; the workflow falls back to those names when the corresponding `ANDROID_*` secret is unset.
